@@ -92,7 +92,7 @@ contract IrisVerifier {
         uint256 confidence,
         uint256 nonce
     ) external onlyOracle {
-        _getActiveNullifier(wallet);
+        _checkActiveWallet(wallet);
 
         if (usedNonces[wallet][nonce]) revert NonceAlreadyUsed(nonce);
         usedNonces[wallet][nonce] = true;
@@ -159,11 +159,9 @@ contract IrisVerifier {
 
     /// @dev Verifies that a wallet is registered and active in the IrisRegistry.
     /// @param wallet The wallet to check.
-    /// @return The nullifier hash associated with the wallet.
-    function _getActiveNullifier(address wallet) internal view returns (uint256) {
-        uint256 nullifier = irisRegistry.worldIdVerifier().walletToNullifier(wallet);
-        if (nullifier == 0) revert WalletNotRegistered(wallet);
-        if (!irisRegistry.isActive(nullifier)) revert WalletNotActive(wallet);
-        return nullifier;
+    function _checkActiveWallet(address wallet) internal view {
+        bytes32 irisHash = irisRegistry.walletToIrisHash(wallet);
+        if (irisHash == bytes32(0)) revert WalletNotRegistered(wallet);
+        if (!irisRegistry.isActive(irisHash)) revert WalletNotActive(wallet);
     }
 }

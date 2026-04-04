@@ -4,37 +4,26 @@ pragma solidity ^0.8.28;
 import {Test} from "forge-std/Test.sol";
 import {IrisVerifier} from "../src/IrisVerifier.sol";
 import {IrisRegistry} from "../src/IrisRegistry.sol";
-import {WorldIDVerifier} from "../src/WorldIDVerifier.sol";
-import {IWorldID} from "@worldcoin/interfaces/IWorldID.sol";
-
-contract MockWorldID is IWorldID {
-    function verifyProof(uint256, uint256, uint256, uint256, uint256[8] calldata) external pure override {}
-}
 
 contract IrisVerifierTest is Test {
     IrisVerifier public irisVerifier;
     IrisRegistry public registry;
-    WorldIDVerifier public worldVerifier;
-    MockWorldID public mockWorldId;
 
     address public deployer = makeAddr("deployer");
     address public oracle = makeAddr("oracle");
     address public alice = makeAddr("alice");
     address public bob = makeAddr("bob");
-    uint256 public constant NULLIFIER_1 = 12345;
+    bytes32 public constant IRIS_1 = keccak256("iris_alice");
     uint256 public constant EXPIRATION_BLOCKS = 50;
-    uint256[8] public dummyProof;
 
     function setUp() public {
         vm.startPrank(deployer);
-        mockWorldId = new MockWorldID();
-        worldVerifier = new WorldIDVerifier(IWorldID(address(mockWorldId)), "app_iriswallet", "create-iris-wallet");
-        registry = new IrisRegistry(worldVerifier);
+        registry = new IrisRegistry();
         irisVerifier = new IrisVerifier(registry, oracle, EXPIRATION_BLOCKS);
         vm.stopPrank();
 
         // Register alice
-        registry.registerWallet(alice, 1, NULLIFIER_1, dummyProof);
+        registry.registerWallet(alice, IRIS_1);
     }
 
     // --- submitMatchResult ---
@@ -76,7 +65,7 @@ contract IrisVerifierTest is Test {
 
     function test_revert_submitMatchResult_walletDeactivated() public {
         vm.prank(alice);
-        registry.deactivateWallet(NULLIFIER_1);
+        registry.deactivateWallet(IRIS_1);
 
         vm.prank(oracle);
         vm.expectRevert(abi.encodeWithSelector(IrisVerifier.WalletNotActive.selector, alice));
