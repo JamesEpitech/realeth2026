@@ -270,6 +270,19 @@ body {
 
 /* ── Misc ── */
 
+.scan-hint {
+  font-size: 13px;
+  color: #8892a6;
+  text-align: center;
+  padding: 0 20px;
+  line-height: 1.4;
+}
+
+.loading-text {
+  font-size: 13px;
+  margin-left: 8px;
+}
+
 .error-msg {
   color: #ff6b7a;
   font-size: 13px;

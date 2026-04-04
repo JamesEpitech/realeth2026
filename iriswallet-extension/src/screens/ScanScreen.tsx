@@ -1,32 +1,33 @@
 import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
-import { scanIris } from '../mock/irisMock';
-import { authenticate } from '../services/api';
+import { scanIris } from '../services/api';
 
 export default function ScanScreen() {
   const { setScreen, setWallet, setCurrentHash } = useWallet();
-  const [mode, setMode] = useState<'known' | 'new'>('known');
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState('');
   const [error, setError] = useState('');
 
   const handleScan = async () => {
     setLoading(true);
     setError('');
+    setStatus('Connexion a la camera...');
     try {
-      const hash = scanIris(mode);
-      setCurrentHash(hash);
-      const result = await authenticate(hash);
+      setStatus('Scan en cours...');
+      const result = await scanIris();
 
       if (result.found) {
         setWallet(result.wallet);
         setScreen('dashboard');
       } else {
+        setCurrentHash(result.irisHash);
         setScreen('register');
       }
-    } catch {
-      setError('Impossible de contacter le serveur');
+    } catch (e: any) {
+      setError(e.message || 'Impossible de contacter le serveur');
     } finally {
       setLoading(false);
+      setStatus('');
     }
   };
 
@@ -43,28 +44,19 @@ export default function ScanScreen() {
           </svg>
         </div>
         <h1 className="title">IrisWallet</h1>
-        <p className="subtitle">Authentification biométrique</p>
+        <p className="subtitle">Authentification biometrique</p>
       </div>
 
-      <div className="toggle-group">
-        <span className="toggle-label">Mode test :</span>
-        <button
-          className={`toggle-btn ${mode === 'known' ? 'active' : ''}`}
-          onClick={() => setMode('known')}
-        >
-          Hash connu
-        </button>
-        <button
-          className={`toggle-btn ${mode === 'new' ? 'active' : ''}`}
-          onClick={() => setMode('new')}
-        >
-          Hash nouveau
-        </button>
-      </div>
+      <p className="scan-hint">
+        Placez votre oeil devant la camera puis appuyez sur le bouton
+      </p>
 
       <button className="btn-primary" onClick={handleScan} disabled={loading}>
         {loading ? (
-          <span className="spinner" />
+          <>
+            <span className="spinner" />
+            {status && <span className="loading-text">{status}</span>}
+          </>
         ) : (
           <>
             <span className="btn-icon">👁</span>

@@ -18,6 +18,6 @@
   },
   "permissions": [],
   "host_permissions": [
-    "http://localhost:3001/*"
+    "http://localhost:5000/*"
   ]
 }

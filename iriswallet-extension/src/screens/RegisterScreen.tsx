@@ -3,7 +3,7 @@ import { useWallet } from '../context/WalletContext';
 import { register } from '../services/api';
 
 export default function RegisterScreen() {
-  const { currentHash, setWallet, setScreen } = useWallet();
+  const { setWallet, setScreen } = useWallet();
   const [walletName, setWalletName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,11 +17,11 @@ export default function RegisterScreen() {
     setLoading(true);
     setError('');
     try {
-      const result = await register(currentHash, walletName.trim());
+      const result = await register(walletName.trim());
       setWallet(result.wallet);
       setScreen('dashboard');
-    } catch {
-      setError('Erreur lors de la création du wallet');
+    } catch (e: any) {
+      setError(e.message || 'Erreur lors de la creation du wallet');
     } finally {
       setLoading(false);
     }
@@ -31,7 +31,7 @@ export default function RegisterScreen() {
     <div className="screen">
       <div className="logo-section">
         <h1 className="title">Nouveau Wallet</h1>
-        <p className="subtitle">Iris non reconnu — créez votre wallet</p>
+        <p className="subtitle">Iris non reconnu — gardez votre oeil devant la camera</p>
       </div>
 
       <div className="form-group">
@@ -48,7 +48,7 @@ export default function RegisterScreen() {
       </div>
 
       <button className="btn-primary" onClick={handleRegister} disabled={loading}>
-        {loading ? <span className="spinner" /> : 'Créer mon wallet'}
+        {loading ? <span className="spinner" /> : 'Creer mon wallet'}
       </button>
 
       {error && <p className="error-msg">{error}</p>}
