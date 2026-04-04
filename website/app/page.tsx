@@ -20,9 +20,9 @@ export default function Home() {
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
       ),
-      title: "Anti-Spoofing",
+      title: "Identity Assurance",
       description:
-        "Multi-layer liveness analysis and visual consistency checks that block image, screen, and replay attacks.",
+        "Layered identity checks and consistency validation built for dependable authentication decisions.",
       accent: "#a78bfa",
     },
     {
@@ -51,7 +51,7 @@ export default function Home() {
     },
     {
       title: "Verify",
-      description: "Anti-spoofing checks run before any authentication decision is made.",
+      description: "Identity checks run before any authentication decision is made.",
     },
     {
       title: "Unlock",
@@ -124,7 +124,7 @@ export default function Home() {
               <span>Fast. Intentional. Unforgeable.</span>
             </h1>
             <p className="lead">
-              IrisWallet combines biometric identity, real-time anti-spoofing,
+              IrisWallet combines biometric identity, real-time verification,
               and secure wallet orchestration into a seamless user experience.
             </p>
             <div className="actions">
@@ -202,7 +202,7 @@ export default function Home() {
             <p className="eyebrow">Product Stack</p>
             <h2>A biometric wallet stack built for trust.</h2>
             <p className="subtitle">
-              Every layer is designed to eliminate spoofing, simplify enrollment,
+              Every layer is designed to improve trust, simplify enrollment,
               and keep your digital identity secure.
             </p>
           </div>
@@ -254,7 +254,7 @@ export default function Home() {
 
             <div className="security-panel reveal reveal-delay-2" id="security">
               <p className="eyebrow">Security Posture</p>
-              <h3>Built to reduce spoofing and keep the flow clean.</h3>
+              <h3>Built to keep the flow secure and easy to understand.</h3>
               <ul className="security-list">
                 {securityItems.map((item) => (
                   <li key={item} className="security-item">
