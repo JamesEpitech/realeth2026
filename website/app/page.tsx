@@ -3,81 +3,111 @@ import Image from "next/image";
 export default function Home() {
   const features = [
     {
-      title: "Iris capture",
+      icon: "👁",
+      title: "Iris Capture",
       description:
-        "Guided capture, quality checks, and reliable extraction designed for low-friction enrollment.",
+        "Guided capture with real-time quality checks and reliable extraction designed for frictionless enrollment.",
     },
     {
-      title: "Anti-spoofing",
+      icon: "🛡",
+      title: "Anti-Spoofing",
       description:
-        "Liveness analysis and visual consistency checks to block image, screen, and replay attacks.",
+        "Multi-layer liveness analysis and visual consistency checks that block image, screen, and replay attacks.",
     },
     {
-      title: "Wallet security",
+      icon: "🔐",
+      title: "Wallet Security",
       description:
-        "A wallet-first architecture with secure identity checks, clean handoff, and crypto-ready flows.",
+        "Wallet-first architecture with secure identity verification, clean handoff, and crypto-ready transaction flows.",
     },
   ];
 
   const workflow = [
-    "Capture the iris with guided camera alignment.",
-    "Extract a stable biometric fingerprint from the scan.",
-    "Run anti-spoofing checks before any decision is made.",
-    "Unlock the wallet experience when the identity is verified.",
+    {
+      title: "Capture",
+      description: "Align your eye with the guided camera overlay and initiate the scan.",
+    },
+    {
+      title: "Extract",
+      description: "A stable biometric fingerprint is derived from the iris pattern.",
+    },
+    {
+      title: "Verify",
+      description: "Anti-spoofing checks run before any authentication decision is made.",
+    },
+    {
+      title: "Unlock",
+      description: "The wallet experience opens once the identity is cryptographically verified.",
+    },
   ];
 
   const screens = [
     {
       title: "Scan",
-      label: "Authentification biometrique",
-      body: "Position your eye in front of the camera and launch the scan flow.",
+      label: "Biometric authentication",
+      body: "Position your eye in front of the camera and launch the scan flow. Real-time feedback guides you through alignment.",
       accent: "Live capture",
+      chips: ["Camera ready", "Guided overlay"],
     },
     {
       title: "Register",
       label: "Create a new wallet",
-      body: "If the iris is unknown, the user can create a wallet and bind it to the biometric hash.",
+      body: "If the iris is unknown, create a wallet and bind it to your unique biometric hash. One identity, one wallet.",
       accent: "Enrollment",
+      chips: ["New identity", "Hash binding"],
     },
     {
       title: "Dashboard",
       label: "Wallet connected",
-      body: "Once verified, the dashboard presents balance, wallet address, and account status.",
+      body: "Once verified, access your balance, wallet address, transaction history, and account status in real time.",
       accent: "Secure session",
+      chips: ["Authenticated", "Live data"],
     },
   ];
 
-  return (
-    <main className="site-shell">
-      <header className="topbar">
-        <a className="brand" href="#top" aria-label="IrisWallet home">
-          <span className="brand-mark">
-            <Image src="/logo.png" alt="IrisWallet logo" width={42} height={42} priority />
-          </span>
-          <span className="brand-copy">
-            <strong>IrisWallet</strong>
-            <span>Biometric wallet platform</span>
-          </span>
-        </a>
+  const securityItems = [
+    "Biometric decision gates before any wallet access",
+    "Clear separation between capture, verification, and unlock stages",
+    "Compact dashboard-first UI for instant comprehension",
+    "Cryptographic hash binding — no raw biometric data stored",
+  ];
 
-        <nav className="nav-pills" aria-label="Section navigation">
-          <a href="#product">Product</a>
-          <a href="#workflow">Workflow</a>
-          <a href="#security">Security</a>
-        </nav>
+  return (
+    <main>
+      {/* ── Topbar ──────────────────────────── */}
+      <header className="topbar">
+        <div className="topbar-inner">
+          <a className="brand" href="#top" aria-label="IrisWallet home">
+            <span className="brand-mark">
+              <Image src="/logo.png" alt="IrisWallet" width={36} height={36} priority />
+            </span>
+            <span className="brand-copy">
+              <strong>IrisWallet</strong>
+              <span>Biometric Wallet</span>
+            </span>
+          </a>
+
+          <nav className="nav-links" aria-label="Main navigation">
+            <a href="#product">Product</a>
+            <a href="#workflow">Workflow</a>
+            <a href="#screens">Screens</a>
+            <a href="#contact" className="nav-cta">Get in touch</a>
+          </nav>
+        </div>
       </header>
 
+      {/* ── Hero ────────────────────────────── */}
       <section className="hero section-pad" id="top">
         <div className="section-inner hero-grid">
-          <div className="hero-copy fade-up">
-            <p className="eyebrow">BIOMETRIC ACCESS</p>
+          <div className="hero-copy reveal">
+            <p className="eyebrow">Biometric Access</p>
             <h1>
-              The wallet experience, secured by iris recognition.
-              <span> Fast, intentional, and harder to spoof.</span>
+              Your wallet, secured by your iris.
+              <span>Fast. Intentional. Unforgeable.</span>
             </h1>
             <p className="lead">
-              IrisWallet combines biometric identity, anti-spoofing, and secure
-              wallet orchestration into a single polished user journey.
+              IrisWallet combines biometric identity, real-time anti-spoofing,
+              and secure wallet orchestration into a seamless user experience.
             </p>
             <div className="actions">
               <a href="#workflow" className="btn btn-primary">
@@ -87,67 +117,84 @@ export default function Home() {
                 Talk to us
               </a>
             </div>
-            <div className="hero-metrics">
-              <div className="metric-card">
-                <span className="metric-label">Verification path</span>
-                <strong>3-stage biometric flow</strong>
+            <div className="hero-stats">
+              <div className="stat">
+                <span className="stat-value">3-step</span>
+                <span className="stat-label">Verification</span>
               </div>
-              <div className="metric-card">
-                <span className="metric-label">Design language</span>
-                <strong>Dark UI with cyan glow</strong>
+              <div className="stat">
+                <span className="stat-value">&lt; 2s</span>
+                <span className="stat-label">Scan Time</span>
+              </div>
+              <div className="stat">
+                <span className="stat-value">Zero</span>
+                <span className="stat-label">Raw Data Stored</span>
               </div>
             </div>
           </div>
 
-          <div className="hero-panel fade-up">
-            <div className="panel-header">
-              <div>
-                <p>Live preview</p>
-                <strong>IrisWallet dashboard</strong>
+          <div className="hero-visual reveal reveal-delay-2">
+            <div className="hero-panel">
+              <div className="panel-header">
+                <div className="panel-header-left">
+                  <p>Live Preview</p>
+                  <strong>IrisWallet Dashboard</strong>
+                </div>
+                <span className="status-pill">Connected</span>
               </div>
-              <span className="status-dot">Connected</span>
-            </div>
 
-            <div className="panel-toggle" aria-label="Screen switch preview">
-              <span className="is-active">Scan</span>
-              <span>Register</span>
-              <span>Dashboard</span>
-            </div>
-
-            <div className="scan-card">
-              <div className="scan-ring">
-                <div className="scan-core" />
+              <div className="panel-tabs">
+                <span className="panel-tab active">Scan</span>
+                <span className="panel-tab">Register</span>
+                <span className="panel-tab">Dashboard</span>
               </div>
-              <p>Place your eye in front of the camera and start the biometric scan.</p>
-              <button className="btn-primary btn-primary-compact" type="button">
-                <span className="btn-icon">👁</span>
-                Scan iris
-              </button>
-            </div>
 
-            <div className="panel-grid">
-              <div className="mini-card">
-                <span className="metric-label">Balance</span>
-                <strong>12.48 ETH</strong>
+              <div className="scan-area">
+                <div className="scan-ring">
+                  <div className="scan-core" />
+                </div>
+                <p className="scan-label">
+                  Place your eye in front of the camera and start the biometric scan.
+                </p>
+                <button className="scan-btn" type="button">
+                  <span>👁</span>
+                  Scan Iris
+                </button>
               </div>
-              <div className="mini-card">
-                <span className="metric-label">Wallet</span>
-                <strong>Connected</strong>
+
+              <div className="panel-info-grid">
+                <div className="panel-info-card">
+                  <span className="panel-info-label">Balance</span>
+                  <span className="panel-info-value">12.48 ETH</span>
+                </div>
+                <div className="panel-info-card">
+                  <span className="panel-info-label">Status</span>
+                  <span className="panel-info-value">Verified</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* ── Product ─────────────────────────── */}
       <section id="product" className="section-pad">
         <div className="section-inner">
-          <div className="section-head fade-up">
+          <div className="section-head reveal">
             <p className="eyebrow">Product Stack</p>
-            <h2>A polished biometric wallet stack built for trust.</h2>
+            <h2>A biometric wallet stack built for trust.</h2>
+            <p className="subtitle">
+              Every layer is designed to eliminate spoofing, simplify enrollment,
+              and keep your digital identity secure.
+            </p>
           </div>
-          <div className="pillars">
-            {features.map((feature) => (
-              <article key={feature.title} className="card fade-up">
+          <div className="features-grid">
+            {features.map((feature, i) => (
+              <article
+                key={feature.title}
+                className={`feature-card reveal reveal-delay-${i + 1}`}
+              >
+                <div className="feature-icon">{feature.icon}</div>
                 <h3>{feature.title}</h3>
                 <p>{feature.description}</p>
               </article>
@@ -156,54 +203,72 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Workflow + Security ──────────────── */}
       <section id="workflow" className="section-pad">
-        <div className="section-inner workflow-layout">
-          <div className="workflow-card fade-up">
+        <div className="section-inner">
+          <div className="section-head reveal">
             <p className="eyebrow">Workflow</p>
-            <h2>How the experience moves from scan to access.</h2>
-            <ol className="workflow-list">
-              {workflow.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
+            <h2>From scan to wallet access in four steps.</h2>
           </div>
+          <div className="workflow-grid">
+            <div className="workflow-steps reveal">
+              {workflow.map((step, i) => (
+                <div key={step.title} className="step">
+                  <span className="step-number">{String(i + 1).padStart(2, "0")}</span>
+                  <div className="step-content">
+                    <h4>{step.title}</h4>
+                    <p>{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-          <div id="security" className="security-card fade-up">
-            <p className="eyebrow">Security posture</p>
-            <h3>Built to reduce spoofing and keep the user flow clean.</h3>
-            <ul>
-              <li>Biometric decision gates before wallet access</li>
-              <li>Clear separation between capture, verification, and unlock</li>
-              <li>Compact dashboard-first UI patterns for fast comprehension</li>
-            </ul>
+            <div className="security-panel reveal reveal-delay-2" id="security">
+              <p className="eyebrow">Security Posture</p>
+              <h3>Built to reduce spoofing and keep the flow clean.</h3>
+              <ul className="security-list">
+                {securityItems.map((item) => (
+                  <li key={item} className="security-item">
+                    <span className="security-check">✓</span>
+                    <p>{item}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="section-pad screens-section">
+      {/* ── App Screens ─────────────────────── */}
+      <section id="screens" className="section-pad">
         <div className="section-inner">
-          <div className="section-head fade-up">
+          <div className="section-head reveal">
             <p className="eyebrow">App States</p>
-            <h2>Three screens that define the product experience.</h2>
+            <h2>Three screens that define the experience.</h2>
+            <p className="subtitle">
+              Each screen maps to a stage in the biometric wallet journey — from
+              first scan to full dashboard access.
+            </p>
           </div>
-
           <div className="screens-grid">
-            {screens.map((screen) => (
-              <article key={screen.title} className="screen-mock fade-up">
-                <div className="screen-mock-top">
+            {screens.map((screen, i) => (
+              <article
+                key={screen.title}
+                className={`screen-card reveal reveal-delay-${i + 1}`}
+              >
+                <div className="screen-top">
                   <span className="screen-badge">{screen.accent}</span>
-                  <span className="screen-status" />
+                  <span className="screen-dot" />
                 </div>
-
-                <div className="screen-mock-body">
-                  <p className="screen-kicker">{screen.title}</p>
+                <div className="screen-body">
+                  <span className="screen-kicker">{screen.title}</span>
                   <h3>{screen.label}</h3>
                   <p>{screen.body}</p>
                 </div>
-
-                <div className="screen-mock-footer">
-                  <span className="footer-chip">Camera ready</span>
-                  <span className="footer-chip">Cyan UI</span>
+                <div className="screen-footer">
+                  {screen.chips.map((chip) => (
+                    <span key={chip} className="screen-chip">{chip}</span>
+                  ))}
                 </div>
               </article>
             ))}
@@ -211,14 +276,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="contact" className="section-pad">
+      {/* ── CTA / Contact ───────────────────── */}
+      <section id="contact" className="section-pad cta-section">
         <div className="section-inner">
-          <div className="cta fade-up">
+          <div className="cta-card reveal">
             <p className="eyebrow">Contact</p>
-            <h2>Want to partner on IrisWallet?</h2>
+            <h2>Ready to build with IrisWallet?</h2>
             <p>
               We are open to technical partnerships, pilot deployments, and
-              conversations with teams building secure digital identity products.
+              conversations with teams building the future of secure digital identity.
             </p>
             <div className="actions">
               <a className="btn btn-primary" href="mailto:contact@iriswallet.com">
@@ -231,6 +297,20 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── Footer ──────────────────────────── */}
+      <footer className="site-footer">
+        <div className="section-inner footer-inner">
+          <span className="footer-copy">
+            &copy; {new Date().getFullYear()} IrisWallet. All rights reserved.
+          </span>
+          <div className="footer-links">
+            <a href="#product">Product</a>
+            <a href="#workflow">Workflow</a>
+            <a href="#contact">Contact</a>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
