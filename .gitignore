@@ -1,0 +1,9 @@
+node_modules/
+hardware/venv/
+__pycache__/
+*.pyc
+.env
+irisgate-backend/cre-workflow/irisgate-match/.cre_build_tmp.js
+venv/
+rasp
+rasp.pub
