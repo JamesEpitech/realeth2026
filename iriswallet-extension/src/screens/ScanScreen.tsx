@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
 import { scanIris } from '../services/api';
 
+const API_URL = 'http://localhost:5000';
+
 export default function ScanScreen() {
   const { setScreen, setWallet, setCurrentHash } = useWallet();
   const [loading, setLoading] = useState(false);
@@ -11,9 +13,8 @@ export default function ScanScreen() {
   const handleScan = async () => {
     setLoading(true);
     setError('');
-    setStatus('Connexion a la camera...');
+    setStatus('Scan en cours...');
     try {
-      setStatus('Scan en cours...');
       const result = await scanIris();
 
       if (result.found) {
@@ -33,29 +34,31 @@ export default function ScanScreen() {
 
   return (
     <div className="screen">
-      <div className="logo-section">
-        <div className="iris-icon">
-          <svg viewBox="0 0 100 100" width="80" height="80">
-            <circle cx="50" cy="50" r="45" fill="none" stroke="#00d4ff" strokeWidth="2" />
-            <circle cx="50" cy="50" r="30" fill="none" stroke="#00d4ff" strokeWidth="1.5" opacity="0.7" />
-            <circle cx="50" cy="50" r="15" fill="none" stroke="#00d4ff" strokeWidth="1" opacity="0.5" />
-            <circle cx="50" cy="50" r="8" fill="#00d4ff" opacity="0.3" />
-            <circle cx="50" cy="50" r="4" fill="#00d4ff" />
-          </svg>
-        </div>
+      <div className="logo-section compact">
         <h1 className="title">IrisWallet</h1>
         <p className="subtitle">Authentification biometrique</p>
       </div>
 
+      <div className="camera-container">
+        <img
+          src={`${API_URL}/api/stream`}
+          alt="Camera live"
+          className="camera-feed"
+        />
+        <div className="camera-overlay">
+          <div className="camera-reticle" />
+        </div>
+      </div>
+
       <p className="scan-hint">
-        Placez votre oeil devant la camera puis appuyez sur le bouton
+        Placez votre oeil devant la camera
       </p>
 
       <button className="btn-primary" onClick={handleScan} disabled={loading}>
         {loading ? (
           <>
             <span className="spinner" />
-            {status && <span className="loading-text">{status}</span>}
+            <span className="loading-text">{status}</span>
           </>
         ) : (
           <>
