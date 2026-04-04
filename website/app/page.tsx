@@ -109,7 +109,6 @@ export default function Home() {
             <a href="#product">Product</a>
             <a href="#workflow">Workflow</a>
             <a href="#screens">Screens</a>
-            <a href="#contact" className="nav-cta">Get in touch</a>
           </nav>
         </div>
       </header>
@@ -131,8 +130,8 @@ export default function Home() {
               <a href="#workflow" className="btn btn-primary">
                 Explore the flow
               </a>
-              <a href="#contact" className="btn btn-ghost">
-                Talk to us
+              <a href="#screens" className="btn btn-ghost">
+                View screens
               </a>
             </div>
             <div className="hero-stats">
@@ -334,28 +333,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── CTA / Contact ───────────────────── */}
-      <section id="contact" className="section-pad cta-section">
-        <div className="section-inner">
-          <div className="cta-card reveal">
-            <p className="eyebrow">Contact</p>
-            <h2>Ready to build with IrisWallet?</h2>
-            <p>
-              We are open to technical partnerships, pilot deployments, and
-              conversations with teams building the future of secure digital identity.
-            </p>
-            <div className="actions">
-              <a className="btn btn-primary" href="mailto:contact@iriswallet.com">
-                contact@iriswallet.com
-              </a>
-              <a className="btn btn-ghost" href="#top">
-                Back to top
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ── Footer ──────────────────────────── */}
       <footer className="site-footer">
         <div className="section-inner footer-inner">
@@ -365,7 +342,7 @@ export default function Home() {
           <div className="footer-links">
             <a href="#product">Product</a>
             <a href="#workflow">Workflow</a>
-            <a href="#contact">Contact</a>
+            <a href="#screens">Screens</a>
           </div>
         </div>
       </footer>
