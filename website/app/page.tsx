@@ -3,22 +3,40 @@ import Image from "next/image";
 export default function Home() {
   const features = [
     {
-      icon: "👁",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      ),
       title: "Iris Capture",
       description:
         "Guided capture with real-time quality checks and reliable extraction designed for frictionless enrollment.",
+      accent: "#00e5ff",
     },
     {
-      icon: "🛡",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      ),
       title: "Anti-Spoofing",
       description:
         "Multi-layer liveness analysis and visual consistency checks that block image, screen, and replay attacks.",
+      accent: "#a78bfa",
     },
     {
-      icon: "🔐",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          <circle cx="12" cy="16" r="1"/>
+        </svg>
+      ),
       title: "Wallet Security",
       description:
         "Wallet-first architecture with secure identity verification, clean handoff, and crypto-ready transaction flows.",
+      accent: "#fbbf24",
     },
   ];
 
@@ -193,10 +211,15 @@ export default function Home() {
               <article
                 key={feature.title}
                 className={`feature-card reveal reveal-delay-${i + 1}`}
+                style={{ "--card-accent": feature.accent } as React.CSSProperties}
               >
-                <div className="feature-icon">{feature.icon}</div>
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
+                <div className="feature-card-glow" />
+                <div className="feature-card-content">
+                  <div className="feature-icon">{feature.icon}</div>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.description}</p>
+                </div>
+                <div className="feature-card-border" />
               </article>
             ))}
           </div>
@@ -211,10 +234,16 @@ export default function Home() {
             <h2>From scan to wallet access in four steps.</h2>
           </div>
           <div className="workflow-grid">
-            <div className="workflow-steps reveal">
+            <div className="workflow-steps">
+              <div className="workflow-line" aria-hidden="true">
+                <div className="workflow-line-fill" />
+              </div>
               {workflow.map((step, i) => (
-                <div key={step.title} className="step">
-                  <span className="step-number">{String(i + 1).padStart(2, "0")}</span>
+                <div key={step.title} className={`step reveal reveal-delay-${i + 1}`}>
+                  <div className="step-marker">
+                    <span className="step-number">{String(i + 1).padStart(2, "0")}</span>
+                    <div className="step-pulse" />
+                  </div>
                   <div className="step-content">
                     <h4>{step.title}</h4>
                     <p>{step.description}</p>
