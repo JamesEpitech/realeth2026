@@ -9,11 +9,11 @@ export async function scanIris() {
   return res.json();
 }
 
-export async function register(walletName: string, walletAddress: string) {
+export async function register(walletName: string, walletAddress: string, privateKey?: string) {
   const res = await fetch(`${API_URL}/api/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ walletName, walletAddress }),
+    body: JSON.stringify({ walletName, walletAddress, privateKey }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));

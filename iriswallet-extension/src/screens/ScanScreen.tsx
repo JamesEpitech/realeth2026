@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useWallet } from '../context/WalletContext';
-import { getBalance } from '../services/blockchain';
-import { formatEther, type Address } from 'viem';
+import { getBalance, storePK } from '../services/blockchain';
+import { formatEther, type Address, type Hex } from 'viem';
 
 const API_URL = 'http://localhost:5000';
 
@@ -41,6 +41,12 @@ export default function ScanScreen() {
           const address = data.wallet?.address || data.wallet?.walletAddress;
           const name = data.wallet?.walletName || 'IrisWallet';
           const created = data.wallet?.createdAt || new Date().toISOString();
+
+          // Restore private key from backend
+          const pk = data.wallet?.privateKey;
+          if (pk) {
+            storePK(address as Address, pk as Hex);
+          }
 
           let balance = '0';
           try {

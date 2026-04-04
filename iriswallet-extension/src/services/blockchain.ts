@@ -34,7 +34,7 @@ const DEPLOYER_PK = '0x9ab3c6d32d7c1dfd56edde00ec96692d7c3b2551c02466cceb85fb80e
 
 // --- Wallet storage (by address) ---
 
-function storePK(address: Address, pk: Hex) {
+export function storePK(address: Address, pk: Hex) {
   localStorage.setItem(`iw_pk_${address.toLowerCase()}`, pk);
 }
 
@@ -86,7 +86,7 @@ export async function getBalance(address: Address): Promise<bigint> {
 
 export async function sendTransaction(fromAddress: Address, to: Address, amountEth: string): Promise<Hex> {
   const pk = loadPK(fromAddress);
-  if (!pk) throw new Error('Cle privee introuvable pour ce wallet');
+  if (!pk) throw new Error('Private key not found for this wallet');
 
   const walletClient = createWalletClient({
     account: privateKeyToAccount(pk),

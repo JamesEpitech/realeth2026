@@ -21,10 +21,10 @@ export default function RegisterScreen() {
     setError('');
 
     try {
-      const { address } = createWallet();
+      const { address, privateKey } = createWallet();
 
       setStatus('Registering iris...');
-      const backendResult = await register(walletName.trim(), address);
+      const backendResult = await register(walletName.trim(), address, privateKey);
       const irisHash = backendResult.wallet?.irisHash || '';
 
       setStatus('Registering on-chain...');

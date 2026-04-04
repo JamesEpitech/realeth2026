@@ -1,11 +1,11 @@
 import { useState, useRef } from 'react';
 import { useWallet } from '../context/WalletContext';
-import { sendTransaction, getBalance } from '../services/blockchain';
-import { formatEther, type Address } from 'viem';
+import { sendTransaction, getBalance, storePK } from '../services/blockchain';
+import { formatEther, type Address, type Hex } from 'viem';
 
 const API_URL = 'http://localhost:5000';
 
-type Step = 'form' | 'signing' | 'success';
+type Step = 'form' | 'signing' | 'sending' | 'success';
 
 export default function SendScreen() {
   const { wallet, setWallet, setScreen } = useWallet();
@@ -18,6 +18,8 @@ export default function SendScreen() {
   const eventSourceRef = useRef<EventSource | null>(null);
 
   if (!wallet) return null;
+
+  const truncate = (s: string) => s.length <= 14 ? s : `${s.slice(0, 10)}...${s.slice(-4)}`;
 
   const startIrisScan = () => {
     if (!to.trim() || !to.startsWith('0x')) { setError('Invalid address'); return; }
@@ -44,7 +46,16 @@ export default function SendScreen() {
           return;
         }
 
-        setStatus('Iris verified — sending...');
+        // Restore private key if returned by backend
+        const pk = data.wallet?.privateKey;
+        if (pk) {
+          storePK(wallet.walletAddress as Address, pk as Hex);
+        }
+
+        // Move to sending step (no camera)
+        setStep('sending');
+        setStatus('Sending transaction...');
+
         try {
           const hash = await sendTransaction(
             wallet.walletAddress as Address,
@@ -81,17 +92,44 @@ export default function SendScreen() {
     <div className="screen">
       <div className="logo-section">
         <h1 className="title">Send ETH</h1>
-        <p className="subtitle">{step === 'signing' ? 'Iris scan to authorize' : 'An iris scan is required to sign'}</p>
+        <p className="subtitle">
+          {step === 'signing' ? 'Iris scan to authorize'
+            : step === 'sending' ? 'Iris confirmed'
+            : step === 'success' ? 'Transaction sent'
+            : 'An iris scan is required to sign'}
+        </p>
       </div>
 
-      {step === 'success' ? (
+      {step === 'sending' && (
+        <div className="dashboard-card">
+          <p className="scan-status success">Iris verified</p>
+          <div className="info-row">
+            <span className="info-label">To</span>
+            <span className="info-value mono">{truncate(to)}</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Amount</span>
+            <span className="info-value">{amount} ETH</span>
+          </div>
+          <div className="scan-status">
+            <span className="spinner" />
+            <span className="loading-text">{status}</span>
+          </div>
+        </div>
+      )}
+
+      {step === 'success' && (
         <div className="dashboard-card">
           <p className="scan-status success">Transaction confirmed</p>
           <div className="info-row">
             <span className="info-label">Tx</span>
             <a className="info-value mono" href={`https://sepolia.etherscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer">
-              {txHash.slice(0, 10)}...{txHash.slice(-4)}
+              {truncate(txHash)}
             </a>
+          </div>
+          <div className="info-row">
+            <span className="info-label">To</span>
+            <span className="info-value mono">{truncate(to)}</span>
           </div>
           <div className="info-row">
             <span className="info-label">Amount</span>
@@ -99,41 +137,38 @@ export default function SendScreen() {
           </div>
           <button className="btn-primary" onClick={() => setScreen('dashboard')}>Back to dashboard</button>
         </div>
-      ) : (
+      )}
+
+      {step === 'signing' && (
         <>
           <div className="camera-container">
             <img src={`${API_URL}/api/stream`} alt="Camera live" className="camera-feed" />
             <div className="camera-overlay">
-              <div className={`camera-reticle ${step === 'signing' ? 'reticle-scanning' : ''}`} />
+              <div className="camera-reticle reticle-scanning" />
             </div>
           </div>
+          <div className="scan-status"><span className="scan-status-dot" /><span>{status}</span></div>
+          <p className="scan-hint">Scan is automatic — keep your eye in front of the camera</p>
+          <button className="btn-link" onClick={cancelScan}>Cancel</button>
+        </>
+      )}
 
-          {step === 'form' && (
-            <>
-              <div className="form-group">
-                <label className="form-label" htmlFor="send-to">Recipient address</label>
-                <input id="send-to" className="form-input" type="text" placeholder="0x..." value={to} onChange={(e) => setTo(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="send-amount">
-                  Amount (ETH)
-                  <span className="balance-hint"> — available: {parseFloat(String(wallet.balance)).toFixed(4)}</span>
-                </label>
-                <input id="send-amount" className="form-input" type="number" step="0.0001" placeholder="0.001" value={amount} onChange={(e) => setAmount(e.target.value)} />
-              </div>
-              <button className="btn-primary" onClick={startIrisScan}>Sign with my iris</button>
-              {error && <p className="error-msg">{error}</p>}
-              <button className="btn-link" onClick={() => setScreen('dashboard')}>← Back</button>
-            </>
-          )}
-
-          {step === 'signing' && (
-            <>
-              <div className="scan-status"><span className="scan-status-dot" /><span>{status}</span></div>
-              <p className="scan-hint">Scan is automatic — keep your eye in front of the camera</p>
-              <button className="btn-link" onClick={cancelScan}>Cancel</button>
-            </>
-          )}
+      {step === 'form' && (
+        <>
+          <div className="form-group">
+            <label className="form-label" htmlFor="send-to">Recipient address</label>
+            <input id="send-to" className="form-input" type="text" placeholder="0x..." value={to} onChange={(e) => setTo(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="send-amount">
+              Amount (ETH)
+              <span className="balance-hint"> — available: {parseFloat(String(wallet.balance)).toFixed(4)}</span>
+            </label>
+            <input id="send-amount" className="form-input" type="number" step="0.0001" placeholder="0.001" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          </div>
+          <button className="btn-primary" onClick={startIrisScan}>Sign with my iris</button>
+          {error && <p className="error-msg">{error}</p>}
+          <button className="btn-link" onClick={() => setScreen('dashboard')}>← Back</button>
         </>
       )}
     </div>

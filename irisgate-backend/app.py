@@ -146,24 +146,30 @@ def init_db():
             mask_codes BLOB NOT NULL,
             iris_code_version TEXT,
             eye_side TEXT DEFAULT 'left',
+            private_key TEXT DEFAULT '',
             balance REAL NOT NULL DEFAULT 0.0,
             created_at REAL NOT NULL
         )
     """)
+    # Add private_key column if missing (existing DBs)
+    try:
+        conn.execute("ALTER TABLE accounts ADD COLUMN private_key TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
 
-def save_account(address, wallet_name, template, eye_side="left"):
+def save_account(address, wallet_name, template, eye_side="left", private_key=""):
     iris_codes_bytes = _serialize_codes(template.iris_codes)
     mask_codes_bytes = _serialize_codes(template.mask_codes)
     version = getattr(template, 'iris_code_version', None)
 
     conn = sqlite3.connect(DB_PATH)
     conn.execute(
-        "INSERT INTO accounts (address, wallet_name, iris_codes, mask_codes, iris_code_version, eye_side, balance, created_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        (address, wallet_name, iris_codes_bytes, mask_codes_bytes, version, eye_side, 0.0, time.time())
+        "INSERT INTO accounts (address, wallet_name, iris_codes, mask_codes, iris_code_version, eye_side, private_key, balance, created_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (address, wallet_name, iris_codes_bytes, mask_codes_bytes, version, eye_side, private_key, 0.0, time.time())
     )
     conn.commit()
     conn.close()
@@ -172,18 +178,21 @@ def save_account(address, wallet_name, template, eye_side="left"):
 def get_account_info(address):
     conn = sqlite3.connect(DB_PATH)
     row = conn.execute(
-        "SELECT address, wallet_name, balance, created_at FROM accounts WHERE address = ?",
+        "SELECT address, wallet_name, balance, created_at, private_key FROM accounts WHERE address = ?",
         (address,)
     ).fetchone()
     conn.close()
     if row is None:
         return None
-    return {
+    info = {
         "walletAddress": row[0],
         "walletName": row[1],
         "balance": row[2],
         "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(row[3])),
     }
+    if row[4]:
+        info["privateKey"] = row[4]
+    return info
 
 
 def load_all_accounts():
@@ -355,7 +364,8 @@ def api_register():
 
         # Create the account — use the address provided by the extension or generate one
         address = data.get("walletAddress") or _generate_address()
-        save_account(address, wallet_name, template)
+        private_key = data.get("privateKey", "")
+        save_account(address, wallet_name, template, private_key=private_key)
 
         wallet_info = get_account_info(address)
         wallet_info["irisHash"] = iris_hash
