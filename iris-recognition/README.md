@@ -13,21 +13,27 @@ Le pipeline suit l'algorithme de Daugman, implemente par [open-iris](https://git
 
 Le hash est un SHA-256 tronque de l'IrisCode.
 
-## Installation
+## Quickstart (de zero)
 
 ```bash
+git clone git@github.com:enzo-bazin/realeth2026.git
+cd realeth2026/iris-recognition
+
+# Setup environnement
 python3 -m venv .venv
 source .venv/bin/activate
-
 pip install "setuptools>=69"
 pip install "pydantic>=1.10,<2"
 
-# Cloner open-iris et relacher les contraintes de version
+# Installer open-iris (Worldcoin)
 git clone --depth 1 https://github.com/worldcoin/open-iris.git
 cd open-iris
 sed -i 's/==/>=/' requirements/base.txt requirements/server.txt
 IRIS_ENV=SERVER pip install -e .
 cd ..
+
+# Tester sur le dataset inclus (50 photos, 9 iris)
+python iris_recognition.py identify ../newdataset/not_sorted/*.jpg
 ```
 
 ## Utilisation
