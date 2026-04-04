@@ -2,6 +2,7 @@ import { useWallet } from './context/WalletContext';
 import ScanScreen from './screens/ScanScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import DashboardScreen from './screens/DashboardScreen';
+import SendScreen from './screens/SendScreen';
 
 export default function App() {
   const { screen, loading } = useWallet();
@@ -13,6 +14,7 @@ export default function App() {
       {screen === 'scan' && <ScanScreen />}
       {screen === 'register' && <RegisterScreen />}
       {screen === 'dashboard' && <DashboardScreen />}
+      {screen === 'send' && <SendScreen />}
     </div>
   );
 }

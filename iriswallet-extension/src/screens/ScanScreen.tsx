@@ -1,70 +1,20 @@
 import { useEffect, useState, useRef } from 'react';
 import { useWallet } from '../context/WalletContext';
-import { isIrisRegistered, getOnChainWallet, getBalance } from '../services/blockchain';
-import { formatEther } from 'viem';
+import { getBalance } from '../services/blockchain';
+import { formatEther, type Address } from 'viem';
 
 const API_URL = 'http://localhost:5000';
 
 export default function ScanScreen() {
-  const { setScreen, setWallet, setCurrentHash } = useWallet();
+  const { setScreen, setWallet } = useWallet();
   const [status, setStatus] = useState('Recherche de votre oeil...');
   const [error, setError] = useState('');
-  const [unknownHash, setUnknownHash] = useState('');
+  const [unknown, setUnknown] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
-
-  const checkOnChain = async (irisHash: string, walletFromBackend: any) => {
-    try {
-      setStatus('Verification on-chain...');
-      const registered = await isIrisRegistered(irisHash);
-
-      if (registered) {
-        const onChainData = await getOnChainWallet(irisHash);
-        if (onChainData && onChainData.active) {
-          const bal = await getBalance(onChainData.wallet);
-          setWallet({
-            irisHash,
-            walletName: walletFromBackend?.walletName || 'IrisWallet',
-            walletAddress: onChainData.wallet,
-            balance: formatEther(bal),
-            createdAt: new Date(Number(onChainData.registeredAt) * 1000).toISOString(),
-            onChain: true,
-          });
-          setScreen('dashboard');
-          return;
-        }
-      }
-
-      // On-chain not found — check if backend knows it
-      if (walletFromBackend) {
-        setWallet({
-          ...walletFromBackend,
-          onChain: false,
-        });
-        setScreen('dashboard');
-        return;
-      }
-
-      // Not found anywhere
-      setCurrentHash(irisHash);
-      setUnknownHash(irisHash);
-      setStatus('Iris non reconnu');
-    } catch (e: any) {
-      console.warn('On-chain check failed, falling back to backend:', e.message);
-      // Fallback: use backend data if available
-      if (walletFromBackend) {
-        setWallet({ ...walletFromBackend, onChain: false });
-        setScreen('dashboard');
-      } else {
-        setCurrentHash(irisHash);
-        setUnknownHash(irisHash);
-        setStatus('Iris non reconnu');
-      }
-    }
-  };
 
   const startAutoScan = () => {
     setError('');
-    setUnknownHash('');
+    setUnknown(false);
     setStatus('Recherche de votre oeil...');
 
     if (eventSourceRef.current) {
@@ -75,12 +25,12 @@ export default function ScanScreen() {
     const es = new EventSource(`${API_URL}/api/autoscan`);
     eventSourceRef.current = es;
 
-    es.onmessage = (event) => {
+    es.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
 
         if (data.status === 'scanning') {
-          setStatus('Recherche de votre oeil...');
+          setStatus('Recherche de votre iris...');
           return;
         }
 
@@ -88,21 +38,31 @@ export default function ScanScreen() {
         eventSourceRef.current = null;
 
         if (data.status === 'found') {
-          const irisHash = data.wallet?.irisHash || data.irisHash;
-          if (irisHash) {
-            checkOnChain(irisHash, data.wallet);
-          } else {
-            setWallet(data.wallet);
-            setScreen('dashboard');
-          }
+          // Backend matched iris — the wallet address is the one we gave at register
+          const address = data.wallet?.address || data.wallet?.walletAddress;
+          const name = data.wallet?.walletName || 'IrisWallet';
+          const created = data.wallet?.createdAt || new Date().toISOString();
+
+          // Fetch real balance from chain
+          let balance = '0';
+          try {
+            const bal = await getBalance(address as Address);
+            balance = formatEther(bal);
+          } catch { /* ignore */ }
+
+          setWallet({
+            walletName: name,
+            walletAddress: address,
+            balance,
+            createdAt: created,
+            onChain: true,
+          });
+          setScreen('dashboard');
         } else if (data.status === 'unknown') {
-          setCurrentHash(data.irisHash);
-          setUnknownHash(data.irisHash);
+          setUnknown(true);
           setStatus('Iris non reconnu');
         }
-      } catch {
-        // ignore
-      }
+      } catch { /* ignore */ }
     };
 
     es.onerror = () => {
@@ -115,17 +75,10 @@ export default function ScanScreen() {
   useEffect(() => {
     startAutoScan();
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
+      if (eventSourceRef.current) eventSourceRef.current.close();
       fetch(`${API_URL}/api/autoscan/stop`, { method: 'POST' }).catch(() => {});
     };
   }, []);
-
-  const handleRetry = () => {
-    setUnknownHash('');
-    startAutoScan();
-  };
 
   return (
     <div className="screen">
@@ -135,29 +88,19 @@ export default function ScanScreen() {
       </div>
 
       <div className="camera-container">
-        <img
-          src={`${API_URL}/api/stream`}
-          alt="Camera live"
-          className="camera-feed"
-        />
+        <img src={`${API_URL}/api/stream`} alt="Camera live" className="camera-feed" />
         <div className="camera-overlay">
-          <div className={`camera-reticle ${unknownHash ? 'reticle-warning' : ''}`} />
+          <div className={`camera-reticle ${unknown ? 'reticle-warning' : ''}`} />
         </div>
       </div>
 
       {error ? (
         <p className="error-msg">{error}</p>
-      ) : unknownHash ? (
+      ) : unknown ? (
         <>
-          <p className="scan-status warning">
-            Iris non reconnu — aucun compte associe
-          </p>
-          <button className="btn-primary" onClick={() => setScreen('register')}>
-            Creer un compte
-          </button>
-          <button className="btn-link" onClick={handleRetry}>
-            Reessayer le scan
-          </button>
+          <p className="scan-status warning">Iris non reconnu — aucun compte associe</p>
+          <button className="btn-primary" onClick={() => setScreen('register')}>Creer un compte</button>
+          <button className="btn-link" onClick={() => { setUnknown(false); startAutoScan(); }}>Reessayer le scan</button>
         </>
       ) : (
         <>
@@ -165,9 +108,7 @@ export default function ScanScreen() {
             <span className="scan-status-dot" />
             <span>{status}</span>
           </div>
-          <p className="scan-hint">
-            Placez votre oeil devant la camera, le scan est automatique
-          </p>
+          <p className="scan-hint">Placez votre oeil devant la camera, le scan est automatique</p>
         </>
       )}
     </div>

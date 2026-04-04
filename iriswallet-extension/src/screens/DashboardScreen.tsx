@@ -9,7 +9,7 @@ function truncateAddress(addr: string): string {
 }
 
 export default function DashboardScreen() {
-  const { wallet, setWallet, logout } = useWallet();
+  const { wallet, setWallet, setScreen, logout } = useWallet();
   const [refreshing, setRefreshing] = useState(false);
 
   const refreshBalance = async () => {
@@ -88,6 +88,10 @@ export default function DashboardScreen() {
           </div>
         )}
       </div>
+
+      <button className="btn-primary" onClick={() => setScreen('send')}>
+        Envoyer ETH
+      </button>
 
       <button className="btn-danger" onClick={logout}>
         Deconnexion

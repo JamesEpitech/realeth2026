@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
 import { register } from '../services/api';
-import { registerOnChain, getBalance } from '../services/blockchain';
+import { createWallet, registerOnChain, getBalance } from '../services/blockchain';
 import { formatEther } from 'viem';
 
 export default function RegisterScreen() {
-  const { currentHash, setWallet, setScreen } = useWallet();
+  const { setWallet, setScreen } = useWallet();
   const [walletName, setWalletName] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
@@ -21,21 +21,24 @@ export default function RegisterScreen() {
     setError('');
 
     try {
-      // 1. Register in backend (stores iris template)
+      // 1. Generate wallet (stored locally by address)
+      const { address } = createWallet();
+
+      // 2. Register in backend with our address
       setStatus('Enregistrement iris...');
-      const backendResult = await register(walletName.trim());
+      const backendResult = await register(walletName.trim(), address);
+      const irisHash = backendResult.wallet?.irisHash || '';
 
-      // 2. Register on-chain
+      // 3. Register on-chain
       setStatus('Enregistrement on-chain...');
-      const { walletAddress, txHash } = await registerOnChain(currentHash);
+      const txHash = await registerOnChain(address, irisHash);
 
-      // 3. Get balance
-      const bal = await getBalance(walletAddress);
+      // 4. Get balance
+      const bal = await getBalance(address);
 
       setWallet({
-        irisHash: currentHash,
         walletName: walletName.trim(),
-        walletAddress,
+        walletAddress: address,
         balance: formatEther(bal),
         createdAt: new Date().toISOString(),
         onChain: true,
@@ -43,19 +46,7 @@ export default function RegisterScreen() {
       });
       setScreen('dashboard');
     } catch (e: any) {
-      // If on-chain fails, fallback to backend-only
-      if (e.message?.includes('insufficient funds') || e.message?.includes('gas')) {
-        setError('Pas assez de ETH sur World Chain Sepolia pour le gas. Enregistrement off-chain uniquement.');
-        try {
-          const backendResult = await register(walletName.trim());
-          setWallet({ ...backendResult.wallet, onChain: false });
-          setScreen('dashboard');
-        } catch {
-          setError('Erreur lors de la creation du wallet');
-        }
-      } else {
-        setError(e.message || 'Erreur lors de la creation du wallet');
-      }
+      setError(e.message || 'Erreur lors de la creation du wallet');
     } finally {
       setLoading(false);
       setStatus('');
@@ -81,12 +72,6 @@ export default function RegisterScreen() {
           onKeyDown={(e) => e.key === 'Enter' && handleRegister()}
         />
       </div>
-
-      {currentHash && (
-        <p className="iris-hash-display">
-          Iris: {currentHash.slice(0, 8)}...{currentHash.slice(-4)}
-        </p>
-      )}
 
       <button className="btn-primary" onClick={handleRegister} disabled={loading}>
         {loading ? (

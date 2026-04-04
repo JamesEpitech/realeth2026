@@ -348,8 +348,8 @@ def api_register():
                 "distance": round(dist, 4),
             })
 
-        # Creer le compte
-        address = _generate_address()
+        # Creer le compte — utilise l'adresse fournie par l'extension ou en genere une
+        address = data.get("walletAddress") or _generate_address()
         save_account(address, wallet_name, template)
 
         wallet_info = get_account_info(address)
