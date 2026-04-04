@@ -23,9 +23,10 @@ import hashlib
 import subprocess
 from pathlib import Path
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import cv2
+import threading
 
 # Ajouter iris-recognition au path
 IRIS_RECOGNITION_DIR = os.path.join(os.path.dirname(__file__), "..", "iris-recognition")
@@ -47,6 +48,8 @@ PI_STREAM_PORT = int(os.environ.get("PI_STREAM_PORT", "8888"))
 
 # Stream state
 _stream_cap = None
+_cap_lock = threading.Lock()
+_scanning = False  # True pendant un scan, le stream se pause
 
 
 # --- Pi Camera ---
@@ -66,7 +69,7 @@ def _ensure_pi_stream():
 
     # Lancer le stream
     ssh_cmd = (
-        f"nohup rpicam-vid -t 0 --codec mjpeg --width 1280 --height 960 "
+        f"nohup rpicam-vid -t 0 --codec mjpeg --width 640 --height 480 "
         f"--framerate 15 --inline -l -o tcp://0.0.0.0:{PI_STREAM_PORT} --nopreview "
         f"> /tmp/stream.log 2>&1 & disown"
     )
@@ -90,28 +93,35 @@ def _ensure_pi_stream():
 
 def _capture_frame():
     """Capture une frame depuis le Pi et la sauvegarde en fichier temp."""
-    cap = _ensure_pi_stream()
+    global _scanning, _stream_cap
 
-    # Vider le buffer pour avoir la frame la plus recente
-    for _ in range(3):
-        cap.read()
+    _scanning = True
+    time.sleep(0.1)  # laisser le stream se pause
 
-    ret, frame = cap.read()
-    if not ret:
-        # Reconnexion
-        global _stream_cap
-        _stream_cap = None
-        cap = _ensure_pi_stream()
-        for _ in range(3):
-            cap.read()
-        ret, frame = cap.read()
-        if not ret:
-            raise RuntimeError("Echec capture frame depuis le Pi")
+    try:
+        with _cap_lock:
+            cap = _ensure_pi_stream()
 
-    tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
-    cv2.imwrite(tmp.name, frame)
-    tmp.close()
-    return tmp.name
+            # Vider le buffer pour avoir la frame la plus recente
+            for _ in range(5):
+                cap.read()
+
+            ret, frame = cap.read()
+            if not ret:
+                _stream_cap = None
+                cap = _ensure_pi_stream()
+                for _ in range(3):
+                    cap.read()
+                ret, frame = cap.read()
+                if not ret:
+                    raise RuntimeError("Echec capture frame depuis le Pi")
+
+        tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
+        cv2.imwrite(tmp.name, frame)
+        tmp.close()
+        return tmp.name
+    finally:
+        _scanning = False
 
 
 def _process_captured_frame():
@@ -295,7 +305,10 @@ def api_scan():
         })
 
     except RuntimeError as e:
-        return jsonify({"error": f"Pipeline echoue: {e}"}), 422
+        msg = str(e)
+        if "EyeOrientationEstimationError" in msg or "VectorizationError" in msg or "Geometry" in msg:
+            return jsonify({"error": "Iris non detecte. Rapprochez votre oeil et gardez-le bien ouvert."}), 422
+        return jsonify({"error": f"Erreur scan: {msg}"}), 422
     except Exception as e:
         return jsonify({"error": f"Erreur: {e}"}), 500
 
@@ -348,7 +361,10 @@ def api_register():
         }), 201
 
     except RuntimeError as e:
-        return jsonify({"error": f"Pipeline echoue: {e}"}), 422
+        msg = str(e)
+        if "EyeOrientationEstimationError" in msg or "VectorizationError" in msg or "Geometry" in msg:
+            return jsonify({"error": "Iris non detecte. Rapprochez votre oeil et gardez-le bien ouvert."}), 422
+        return jsonify({"error": f"Erreur scan: {msg}"}), 422
     except Exception as e:
         return jsonify({"error": f"Erreur: {e}"}), 500
 
@@ -357,6 +373,61 @@ def api_register():
 def api_auth():
     """Alias pour /api/scan — compatibilite avec l'extension existante."""
     return api_scan()
+
+
+# --- Stream MJPEG pour l'extension ---
+
+_last_jpeg = None  # cache la derniere frame encodee
+
+
+def _stream_reader_thread():
+    """Thread qui lit les frames en continu et les encode en JPEG."""
+    global _last_jpeg, _stream_cap
+    while True:
+        if _scanning:
+            time.sleep(0.05)
+            continue
+        try:
+            with _cap_lock:
+                if _stream_cap is None or not _stream_cap.isOpened():
+                    time.sleep(0.5)
+                    continue
+                ret, frame = _stream_cap.read()
+            if not ret:
+                time.sleep(0.05)
+                continue
+            # Encode directement sans resize — la cam est deja a 320x240 equiv
+            _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
+            _last_jpeg = jpeg.tobytes()
+        except Exception:
+            time.sleep(0.3)
+
+
+def _generate_mjpeg():
+    """Generateur de frames MJPEG pour le streaming HTTP."""
+    while True:
+        try:
+            if _last_jpeg is None:
+                time.sleep(0.05)
+                continue
+            yield (
+                b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' +
+                _last_jpeg +
+                b'\r\n'
+            )
+            time.sleep(0.033)  # ~30 fps
+        except GeneratorExit:
+            return
+
+
+@app.route("/api/stream")
+def api_stream():
+    """Flux MJPEG depuis la camera du Pi. Usage: <img src="/api/stream">"""
+    return Response(
+        _generate_mjpeg(),
+        mimetype='multipart/x-mixed-replace; boundary=frame',
+    )
 
 
 # ======================================================================
@@ -493,6 +564,17 @@ if __name__ == "__main__":
     print("  Modele charge !")
     print()
     init_db()
+
+    # Lancer le stream Pi + thread de lecture
+    print("  Connexion au Pi...")
+    try:
+        _ensure_pi_stream()
+        t = threading.Thread(target=_stream_reader_thread, daemon=True)
+        t.start()
+        print("  Stream Pi connecte !")
+    except Exception as e:
+        print(f"  [WARN] Pi non disponible: {e}")
+        print("  Le stream sera lance au premier scan.")
     print(f"  DB: {DB_PATH}")
     print(f"  Pi: {PI_USER}@{PI_IP}:{PI_STREAM_PORT}")
     print(f"  Seuil match: {MATCH_THRESHOLD}")
@@ -507,4 +589,4 @@ if __name__ == "__main__":
     print("    POST /identify  — identifier (upload image)")
     print("    GET  /health    — status")
     print()
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
