@@ -259,13 +259,9 @@ export default function Home() {
                       <Image src="/logo-ledger.png" alt="Ledger" width={40} height={40} />
                       <span>Ledger</span>
                     </a>
-                    <a className="partner-logo" href="https://chain.link" target="_blank" rel="noopener noreferrer">
-                      <Image src="/logo-chainlink.png" alt="Chainlink" width={40} height={40} />
-                      <span>Chainlink</span>
-                    </a>
-                    <a className="partner-logo" href="https://unlink.io" target="_blank" rel="noopener noreferrer">
-                      <Image src="/logo-unlink.png" alt="Unlink Labs" width={40} height={40} />
-                      <span>Unlink Labs</span>
+                    <a className="partner-logo" href="https://worldcoin.org" target="_blank" rel="noopener noreferrer">
+                      <Image src="/logo-world.png" alt="Worldcoin" width={40} height={40} />
+                      <span>Worldcoin</span>
                     </a>
                   </div>
                 ))}
